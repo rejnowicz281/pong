@@ -119,11 +119,26 @@ class Game:
         text = score_font.render(str(self.player1.score) + "  -  " + str(self.player2.score), True, (255, 255, 255))
         screen.blit(text, (x, y))
 
+    def show_help(self):
+        font = pygame.font.Font('freesansbold.ttf', 20)
+        x = (SCREEN_HEIGHT / 2) - 95
+        y = SCREEN_HEIGHT - 35
+
+        if self.paused:
+            text = "Press 'space' to resume"
+        else:
+            text = "Press 'space' to pause"
+
+        content = font.render(text, True, (255, 255, 255))
+        screen.blit(content, (x, y))
+
     def draw_elements(self):
         self.player1.draw()
         self.player2.draw()
         self.show_score()
         self.ball.draw()
+        self.show_help()
+
 
 # Game
 game = Game()
@@ -138,11 +153,11 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                game.paused = False if game.paused else True
 
-    if game.paused:
-        pygame.time.delay(200)
-        game.paused = False
-    else:
+    if not game.paused:
         keys = pygame.key.get_pressed()
 
         game.ball_collision_check()
