@@ -1,1 +1,1 @@
-# pong
+# Python Pong Game with Pygame
