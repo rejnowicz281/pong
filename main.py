@@ -55,8 +55,9 @@ class Ball(pygame.sprite.Sprite):
 
     @staticmethod
     def get_ball_surface():
-        surf = pygame.Surface((20, 20))
-        surf.fill((255, 255, 255))
+        surf = pygame.Surface((16, 16))
+        surf_rect = surf.get_rect()
+        pygame.draw.circle(surf, (255, 255, 255), (surf_rect.centerx, surf_rect.centery), 8)
 
         return surf
 
@@ -166,7 +167,6 @@ class Game:
         self.ball.draw(screen)
         self.show_score()
         self.show_help()
-
 
 # Game
 game = Game()
