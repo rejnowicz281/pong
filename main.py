@@ -14,129 +14,159 @@ SCREEN_WIDTH = 700
 SCREEN_HEIGHT = 700
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
+main_font = pygame.font.Font('freesansbold.ttf', 20)
 
-class Player:
-    WIDTH = 20
-    HEIGHT = 150
-    SPEED = 15
 
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
+def draw_text(x, y, text, font=main_font, color=(255, 255, 255)):
+    content = font.render(text, True, color)
+    content_rect = content.get_rect(center=(x, y))
+    screen.blit(content, content_rect)
+
+
+class Player(pygame.sprite.Sprite):
+    def __init__(self, x=0, y=0):
+        super().__init__()
+        self.image = self.get_player_surface()
+        self.rect = self.image.get_rect(center=(x, y))
         self.score = 0
+        self.speed = 15
 
-    def draw(self):
-        pygame.draw.rect(screen, (255, 255, 255), self.rect())
+    @staticmethod
+    def get_player_surface():
+        surf = pygame.Surface((20, 150))
+        surf.fill((255, 255, 255))
+        return surf
 
-    def move(self, direction):
-        self.y += (self.SPEED * direction)
+    def move_up(self):
+        self.rect.y -= self.speed
 
-    def rect(self):
-        return pygame.Rect(self.x, self.y, self.WIDTH, self.HEIGHT)
+    def move_down(self):
+        self.rect.y += self.speed
 
     def place_at(self, x, y):
-        self.x = x
-        self.y = y
+        self.rect.centerx = x
+        self.rect.centery = y
 
 
-class Ball:
-    WIDTH = 20
-    HEIGHT = 20
-    INITIAL_X = SCREEN_WIDTH / 2
-    INITIAL_Y = SCREEN_HEIGHT / 2
+class Ball(pygame.sprite.Sprite):
+    X = SCREEN_WIDTH / 2
+    Y = SCREEN_HEIGHT / 2
 
-    def __init__(self, x=INITIAL_X, y=INITIAL_Y):
-        self.x = x
-        self.y = y
+    def __init__(self, x=X, y=Y):
+        super().__init__()
+        self.image = self.get_ball_surface()
+        self.rect = self.image.get_rect(center=(x, y))
         self.x_change = random.choice([3, -3])
         self.y_change = 0
 
-    def draw(self):
-        pygame.draw.rect(screen, (255, 255, 255), self.rect())
+    @staticmethod
+    def get_ball_surface():
+        surf = pygame.Surface((20, 20))
+        surf.fill((255, 255, 255))
 
-    def rect(self):
-        return pygame.Rect(self.x, self.y, self.WIDTH, self.HEIGHT)
+        return surf
 
     def move(self):
-        self.x += (self.x_change * 4)
-        self.y += (self.y_change * 15)  # Make the ball move faster in y-axis
+        self.rect.x += (self.x_change * 4)
+        self.rect.y += (self.y_change * 15)  # Make the ball move faster in y-axis
 
-    def reset_pos(self):
-        self.x = self.INITIAL_X
-        self.y = self.INITIAL_Y
+    def reset(self):
+        self.rect.centerx = self.X
+        self.rect.centery = self.Y
         self.x_change = random.choice([3, -3])
         self.y_change = 0
+
+    def update(self):
+        self.move()
 
 
 class Game:
+    PLAYER1_POS = 30, SCREEN_HEIGHT / 2 + 38
+    PLAYER2_POS = SCREEN_WIDTH - 30, SCREEN_HEIGHT / 2 - 38
+
     def __init__(self):
-        self.player1 = Player(30, SCREEN_HEIGHT / 2)
-        self.player2 = Player(SCREEN_WIDTH - 50, SCREEN_HEIGHT / 3)
-        self.ball = Ball()
+        self.player1 = pygame.sprite.GroupSingle(Player(self.PLAYER1_POS[0], self.PLAYER1_POS[1]))
+        self.player2 = pygame.sprite.GroupSingle(Player(self.PLAYER2_POS[0], self.PLAYER2_POS[1]))
+        self.ball = pygame.sprite.GroupSingle(Ball())
         self.paused = False
 
+    def player_input(self):
+        keys = pygame.key.get_pressed()
+        player1 = self.player1.sprite
+        player2 = self.player2.sprite
+
+        # Move player 1's paddle
+        if keys[pygame.K_w] and player1.rect.top > 0:
+            player1.move_up()
+        if keys[pygame.K_s] and player1.rect.bottom < SCREEN_HEIGHT:
+            player1.move_down()
+
+        # Move player 2's paddle
+        if keys[pygame.K_UP] and player2.rect.top > 0:
+            player2.move_up()
+        if keys[pygame.K_DOWN] and player2.rect.bottom < SCREEN_HEIGHT:
+            player2.move_down()
+
     def ball_collision_check(self):
-        ball = self.ball.rect()
-        player1 = self.player1.rect()
-        player2 = self.player2.rect()
+        ball = self.ball.sprite
+        player1 = self.player1.sprite
+        player2 = self.player2.sprite
 
         # Ball hits top or bottom
-        if ball.top <= 0 or ball.bottom >= SCREEN_HEIGHT:
-            self.ball.y_change *= -1
+        if ball.rect.top <= 0 or ball.rect.bottom >= SCREEN_HEIGHT:
+            ball.y_change *= -1
 
         # Ball hits player1
-        if player1.colliderect(ball):
-            self.ball.x_change = abs(self.ball.x_change)
-            self.ball.y_change = -((ball.centery - player1.centery) / (player1.height / 2))
+        if player1.rect.colliderect(ball.rect):
+            ball.x_change = abs(ball.x_change)
+            ball.y_change = -((ball.rect.centery - player1.rect.centery) / (player1.rect.height / 2))
 
         # Ball hits player2
-        if player2.colliderect(ball):
-            self.ball.x_change = -abs(self.ball.x_change)
-            self.ball.y_change = -((ball.centery - player2.centery) / (player2.height / 2))
+        if player2.rect.colliderect(ball.rect):
+            ball.x_change = -abs(ball.x_change)
+            ball.y_change = -((ball.rect.centery - player2.rect.centery) / (player2.rect.height / 2))
 
         # Ball hits player1's wall
-        if ball.left <= 0:
-            self.player2.score += 1
-            self.reset_position()
+        if ball.rect.left <= 0:
+            player2.score += 1
+            self.reset()
             self.paused = True
 
         # Ball hits player2's wall
-        if ball.right >= SCREEN_WIDTH:
-            self.player1.score += 1
-            self.reset_position()
+        if ball.rect.right >= SCREEN_WIDTH:
+            player1.score += 1
+            self.reset()
             self.paused = True
 
-    def reset_position(self):
-        self.ball.reset_pos()
-        self.player1.place_at(30, SCREEN_HEIGHT / 2)
-        self.player2.place_at(SCREEN_WIDTH - 50, SCREEN_HEIGHT / 3)
+    def reset(self):
+        self.ball.sprite.reset()
+        self.player1.sprite.place_at(self.PLAYER1_POS[0], self.PLAYER1_POS[1])
+        self.player2.sprite.place_at(self.PLAYER2_POS[0], self.PLAYER2_POS[1])
 
     def show_score(self):
-        score_font = pygame.font.Font('freesansbold.ttf', 20)
-        x = (SCREEN_HEIGHT / 2) - 27
-        y = 20
+        x = SCREEN_HEIGHT / 2
+        y = 25
+        text = str(self.player1.sprite.score) + "  -  " + str(self.player2.sprite.score)
 
-        text = score_font.render(str(self.player1.score) + "  -  " + str(self.player2.score), True, (255, 255, 255))
-        screen.blit(text, (x, y))
+        draw_text(x, y, text)
 
     def show_help(self):
-        font = pygame.font.Font('freesansbold.ttf', 20)
-        x = (SCREEN_HEIGHT / 2) - 95
+        x = SCREEN_WIDTH / 2
         y = SCREEN_HEIGHT - 35
+        text = f"Press 'space' to {'resume' if self.paused else 'pause'}"
 
-        if self.paused:
-            text = "Press 'space' to resume"
-        else:
-            text = "Press 'space' to pause"
+        draw_text(x, y, text)
 
-        content = font.render(text, True, (255, 255, 255))
-        screen.blit(content, (x, y))
+    def update(self):
+        if not game.paused:
+            self.ball_collision_check()
+            self.ball.update()
+            self.player_input()
 
-    def draw_elements(self):
-        self.player1.draw()
-        self.player2.draw()
+        self.player1.draw(screen)
+        self.player2.draw(screen)
+        self.ball.draw(screen)
         self.show_score()
-        self.ball.draw()
         self.show_help()
 
 
@@ -157,23 +187,6 @@ while running:
             if event.key == pygame.K_SPACE:
                 game.paused = False if game.paused else True
 
-    if not game.paused:
-        keys = pygame.key.get_pressed()
+    game.update()
 
-        game.ball_collision_check()
-        game.ball.move()
-
-        # Move player 1's paddle
-        if keys[pygame.K_w] and game.player1.rect().top > 0:
-            game.player1.move(-1)
-        if keys[pygame.K_s] and game.player1.rect().bottom < SCREEN_HEIGHT:
-            game.player1.move(1)
-
-        # Move player 2's paddle
-        if keys[pygame.K_UP] and game.player2.rect().top > 0:
-            game.player2.move(-1)
-        if keys[pygame.K_DOWN] and game.player2.rect().bottom < SCREEN_HEIGHT:
-            game.player2.move(1)
-
-    game.draw_elements()
     pygame.display.update()
