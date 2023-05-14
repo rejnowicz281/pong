@@ -17,12 +17,6 @@ screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 main_font = pygame.font.Font('freesansbold.ttf', 20)
 
 
-def draw_text(x, y, text, font=main_font, color=(255, 255, 255)):
-    content = font.render(text, True, color)
-    content_rect = content.get_rect(center=(x, y))
-    screen.blit(content, content_rect)
-
-
 class Player(pygame.sprite.Sprite):
     def __init__(self, x=0, y=0):
         super().__init__()
@@ -148,14 +142,18 @@ class Game:
         y = 25
         text = str(self.player1.sprite.score) + "  -  " + str(self.player2.sprite.score)
 
-        draw_text(x, y, text)
+        content = main_font.render(text, True, (255, 255, 255))
+        content_rect = content.get_rect(center=(x, y))
+        screen.blit(content, content_rect)
 
     def show_help(self):
-        x = SCREEN_WIDTH / 2
+        x = SCREEN_WIDTH / 2 - 95
         y = SCREEN_HEIGHT - 35
         text = f"Press 'space' to {'resume' if self.paused else 'pause'}"
 
-        draw_text(x, y, text)
+        content = main_font.render(text, True, (255, 255, 255))
+        content_rect = content.get_rect(midleft=(x, y))
+        screen.blit(content, content_rect)
 
     def update(self):
         if not game.paused:
