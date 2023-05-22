@@ -1,12 +1,13 @@
-import pygame
 import random
+
+import pygame
 
 # Initialize pygame
 pygame.init()
 
 # Title and Icon
 pygame.display.set_caption("Pong")
-icon = pygame.image.load('icon.png')
+icon = pygame.image.load("icon.png")
 pygame.display.set_icon(icon)
 
 # Create screen
@@ -14,7 +15,7 @@ SCREEN_WIDTH = 700
 SCREEN_HEIGHT = 700
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
-main_font = pygame.font.Font('freesansbold.ttf', 20)
+main_font = pygame.font.Font("freesansbold.ttf", 20)
 
 
 class Player(pygame.sprite.Sprite):
@@ -57,13 +58,16 @@ class Ball(pygame.sprite.Sprite):
     def get_ball_surface():
         surf = pygame.Surface((16, 16))
         surf_rect = surf.get_rect()
-        pygame.draw.circle(surf, (255, 255, 255), (surf_rect.centerx, surf_rect.centery), 8)
+        pygame.draw.circle(
+            surf, (255, 255, 255), (surf_rect.centerx, surf_rect.centery), 8
+        )
+        surf.set_colorkey((0, 0, 0))
 
         return surf
 
     def move(self):
-        self.rect.x += (self.x_change * 4)
-        self.rect.y += (self.y_change * 15)  # Make the ball move faster in y-axis
+        self.rect.x += self.x_change * 4
+        self.rect.y += self.y_change * 15  # Make the ball move faster in y-axis
 
     def reset(self):
         self.rect.centerx = self.X
@@ -80,8 +84,12 @@ class Game:
     PLAYER2_POS = SCREEN_WIDTH - 30, SCREEN_HEIGHT / 2 - 38
 
     def __init__(self):
-        self.player1 = pygame.sprite.GroupSingle(Player(self.PLAYER1_POS[0], self.PLAYER1_POS[1]))
-        self.player2 = pygame.sprite.GroupSingle(Player(self.PLAYER2_POS[0], self.PLAYER2_POS[1]))
+        self.player1 = pygame.sprite.GroupSingle(
+            Player(self.PLAYER1_POS[0], self.PLAYER1_POS[1])
+        )
+        self.player2 = pygame.sprite.GroupSingle(
+            Player(self.PLAYER2_POS[0], self.PLAYER2_POS[1])
+        )
         self.ball = pygame.sprite.GroupSingle(Ball())
         self.paused = False
 
@@ -114,12 +122,16 @@ class Game:
         # Ball hits player1
         if player1.rect.colliderect(ball.rect):
             ball.x_change = abs(ball.x_change)
-            ball.y_change = -((ball.rect.centery - player1.rect.centery) / (player1.rect.height / 2))
+            ball.y_change = -(
+                (ball.rect.centery - player1.rect.centery) / (player1.rect.height / 2)
+            )
 
         # Ball hits player2
         if player2.rect.colliderect(ball.rect):
             ball.x_change = -abs(ball.x_change)
-            ball.y_change = -((ball.rect.centery - player2.rect.centery) / (player2.rect.height / 2))
+            ball.y_change = -(
+                (ball.rect.centery - player2.rect.centery) / (player2.rect.height / 2)
+            )
 
         # Ball hits player1's wall
         if ball.rect.left <= 0:
@@ -167,6 +179,7 @@ class Game:
         self.ball.draw(screen)
         self.show_score()
         self.show_help()
+
 
 # Game
 game = Game()
